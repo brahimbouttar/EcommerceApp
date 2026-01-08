@@ -1,38 +1,95 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Alert
 } from "react-native";
+import { useAuth } from "../services/AuthContext";
+import { getCart, updateCartQuantity, removeFromCart } from "../services/FirestoreService";
+import { useFocusEffect } from '@react-navigation/native';
 
 const CartScreen = () => {
-  const [cartItems, setCartItems] = useState([
-    { id: "1", name: "S22 Ultra 256gb", price: 20, quantity: 3 },
-    { id: "2", name: "itel tv", price: 50, quantity: 2 },
-  ]);
+  const { user } = useAuth();
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const increaseQty = (id) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
-    );
+  // Reload cart when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchCart();
+    }, [user])
+  );
+
+  const fetchCart = async () => {
+    if (!user) {
+      setCartItems([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const items = await getCart(user.uid);
+      setCartItems(items);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const decreaseQty = (id) => {
-    setCartItems((items) =>
-      items
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
+  const handleIncrease = async (item) => {
+    // Optimistic update
+    const newQty = item.quantity + 1;
+    updateLocalQty(item.id, newQty);
+    try {
+      await updateCartQuantity(user.uid, item.id, newQty);
+    } catch (error) {
+      Alert.alert("Error", "Could not update cart");
+      updateLocalQty(item.id, item.quantity); // Revert
+    }
+  };
+
+  const handleDecrease = async (item) => {
+    const newQty = item.quantity - 1;
+    if (newQty < 1) {
+      handleRemove(item);
+      return;
+    }
+
+    updateLocalQty(item.id, newQty);
+    try {
+      await updateCartQuantity(user.uid, item.id, newQty);
+    } catch (error) {
+      Alert.alert("Error", "Could not update cart");
+      updateLocalQty(item.id, item.quantity); // Revert
+    }
+  };
+
+  const handleRemove = async (item) => {
+    Alert.alert("Remove Item", "Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: 'destructive',
+        onPress: async () => {
+          setCartItems(prev => prev.filter(i => i.id !== item.id));
+          try {
+            await removeFromCart(user.uid, item.id);
+          } catch (error) {
+            Alert.alert("Error", "Could not remove item");
+            fetchCart(); // Revert/Reload
+          }
+        }
+      }
+    ]);
+  };
+
+  const updateLocalQty = (id, validQty) => {
+    setCartItems(prev => prev.map(item => item.id === id ? { ...item, quantity: validQty } : item));
   };
 
   const totalPrice = cartItems.reduce(
@@ -42,28 +99,31 @@ const CartScreen = () => {
 
   const renderItem = ({ item }) => (
     <View style={styles.item}>
-      <View>
+      <View style={{ flex: 1 }}>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>${item.price}</Text>
+        <Text style={styles.price}>{item.price} MAD each</Text>
       </View>
 
       <View style={styles.qtyContainer}>
-        <TouchableOpacity onPress={() => decreaseQty(item.id)}>
+        <TouchableOpacity onPress={() => handleDecrease(item)}>
           <Text style={styles.qtyBtn}>−</Text>
         </TouchableOpacity>
 
         <Text style={styles.qty}>{item.quantity}</Text>
 
-        <TouchableOpacity onPress={() => increaseQty(item.id)}>
+        <TouchableOpacity onPress={() => handleIncrease(item)}>
           <Text style={styles.qtyBtn}>+</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
+  if (loading) {
+    return <View style={styles.center}><ActivityIndicator size="large" color="#1e90ff" /></View>;
+  }
+
   return (
     <View style={styles.container}>
-
       {cartItems.length === 0 ? (
         <Text style={styles.empty}>Your cart is empty</Text>
       ) : (
@@ -75,7 +135,7 @@ const CartScreen = () => {
           />
 
           <View style={styles.footer}>
-            <Text style={styles.total}>Total: ${totalPrice}</Text>
+            <Text style={styles.total}>Total: {totalPrice.toFixed(2)} MAD</Text>
             <TouchableOpacity style={styles.checkoutBtn}>
               <Text style={styles.checkoutText}>Checkout</Text>
             </TouchableOpacity>
@@ -85,15 +145,22 @@ const CartScreen = () => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
     backgroundColor: "#fff",
   },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
@@ -106,6 +173,7 @@ const styles = StyleSheet.create({
   },
   price: {
     color: "#777",
+    marginTop: 4
   },
   qtyContainer: {
     flexDirection: "row",
@@ -113,7 +181,9 @@ const styles = StyleSheet.create({
   },
   qtyBtn: {
     fontSize: 22,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
+    fontWeight: 'bold',
+    color: '#1e90ff'
   },
   qty: {
     fontSize: 16,
@@ -123,6 +193,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: "#ddd",
     paddingTop: 12,
+    marginTop: 10
   },
   total: {
     fontSize: 18,

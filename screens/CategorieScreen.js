@@ -1,25 +1,37 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useNavigation } from "@react-navigation/native";
-
-const categories = [
-  { id: "1", name: "Mobiles", icon: "phone-portrait-outline" },
-  { id: "2", name: "Laptops", icon: "laptop-outline" },
-  { id: "3", name: "Headphones", icon: "headset-outline" },
-  { id: "4", name: "TV & Video", icon: "tv-outline" },
-  { id: "5", name: "Cameras", icon: "camera-outline" },
-  { id: "6", name: "Accessories", icon: "hardware-chip-outline" },
-];
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { getCategories } from "../services/FirestoreService";
 
 const CategorieScreen = () => {
   const navigation = useNavigation();
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCategories();
+    }, [])
+  );
+
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
@@ -30,10 +42,14 @@ const CategorieScreen = () => {
         })
       }
     >
-      <Icon name={item.icon} size={36} color="#1e90ff" />
+      <Icon name={item.icon || "mobile"} size={36} color="#1e90ff" />
       <Text style={styles.title}>{item.name}</Text>
     </TouchableOpacity>
   );
+
+  if (loading) {
+    return <View style={styles.center}><ActivityIndicator size="large" color="#1e90ff" /></View>;
+  }
 
   return (
     <View style={styles.container}>
@@ -42,6 +58,7 @@ const CategorieScreen = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         numColumns={2}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>No categories found.</Text>}
       />
     </View>
   );
@@ -55,11 +72,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     padding: 16,
   },
-  header: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   card: {
     flex: 1,

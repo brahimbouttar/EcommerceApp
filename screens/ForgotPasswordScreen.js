@@ -3,24 +3,25 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityInd
 import { useAuth } from '../services/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { resetPassword } = useAuth();
     const navigation = useNavigation();
 
-    const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert('Error', 'Please enter both email and password.');
+    const handleResetPassword = async () => {
+        if (!email) {
+            Alert.alert('Error', 'Please enter your email.');
             return;
         }
 
         setLoading(true);
         try {
-            await login(email, password);
+            await resetPassword(email);
+            Alert.alert('Success', 'Password reset email sent! Check your inbox.');
+            navigation.navigate('Login');
         } catch (error) {
-            Alert.alert('Login Failed', error.message);
+            Alert.alert('Error', error.message);
         } finally {
             setLoading(false);
         }
@@ -28,7 +29,8 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Welcome Back!</Text>
+            <Text style={styles.title}>Reset Password</Text>
+            <Text style={styles.label}>Enter your email to receive a password reset link.</Text>
 
             <TextInput
                 style={styles.input}
@@ -39,28 +41,16 @@ export default function LoginScreen() {
                 autoCapitalize="none"
             />
 
-            <TextInput
-                style={styles.input}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
-
-            <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+            <TouchableOpacity style={styles.button} onPress={handleResetPassword} disabled={loading}>
                 {loading ? (
                     <ActivityIndicator color="#fff" />
                 ) : (
-                    <Text style={styles.buttonText}>Login</Text>
+                    <Text style={styles.buttonText}>Send Reset Link</Text>
                 )}
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Signup')} style={styles.linkButton}>
-                <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.linkButton}>
-                <Text style={styles.linkText}>Forgot Password?</Text>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.linkButton}>
+                <Text style={styles.linkText}>Back to Login</Text>
             </TouchableOpacity>
         </View>
     );
@@ -76,9 +66,15 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 30,
+        marginBottom: 10,
         textAlign: 'center',
         color: '#333',
+    },
+    label: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 20,
     },
     input: {
         height: 50,
@@ -91,7 +87,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
     },
     button: {
-        backgroundColor: '#007bff',
+        backgroundColor: '#ffc107',
         paddingVertical: 15,
         borderRadius: 8,
         alignItems: 'center',
