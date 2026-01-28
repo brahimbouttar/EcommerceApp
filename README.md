@@ -34,9 +34,17 @@ A professional, full-featured mobile e-commerce application built with **React N
 
 ## 📸 Screenshots
 
+## 📸 Screenshots
+
 | Screen 1 | Screen 2 | Screen 3 |
 |:---:|:---:|:---:|
-| <img src="./screenshots/Screenshot_1768408510.png" width="200" alt="Screenshot 1" /> | <img src="./screenshots/Screenshot_1768408554.png" width="200" alt="Screenshot 2" /> | <img src="./screenshots/Screenshot_1768408560.png" width="200" alt="Screenshot 3" /> |
+| <img src="./screenshots/Screenshot_1768408510.png" width="200" /> | <img src="./screenshots/Screenshot_1768408554.png" width="200" /> | <img src="./screenshots/Screenshot_1768408560.png" width="200" /> |
+| <img src="./screenshots/Screenshot_1768408566.png" width="200" /> | <img src="./screenshots/Screenshot_1768408571.png" width="200" /> | <img src="./screenshots/Screenshot_1768408574.png" width="200" /> |
+| <img src="./screenshots/Screenshot_1768408579.png" width="200" /> | <img src="./screenshots/Screenshot_1768408583.png" width="200" /> | <img src="./screenshots/Screenshot_1768408691.png" width="200" /> |
+| <img src="./screenshots/Screenshot_1768408700.png" width="200" /> | <img src="./screenshots/Screenshot_1768408703.png" width="200" /> | <img src="./screenshots/Screenshot_1768408706.png" width="200" /> |
+| <img src="./screenshots/Screenshot_1768408710.png" width="200" /> | <img src="./screenshots/Screenshot_1768408714.png" width="200" /> | <img src="./screenshots/Screenshot_1768408719.png" width="200" /> |
+| <img src="./screenshots/Screenshot_1768408742.png" width="200" /> | <img src="./screenshots/Screenshot_1768408747.png" width="200" /> |  |
+
 
 *(Add your actual screenshots in the `assets` folder and update the paths above)*
 
